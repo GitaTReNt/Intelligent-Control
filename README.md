@@ -1,35 +1,35 @@
-# Arena Challenge简介
-Arena Challenge是一个由Matlab代码编写的仿真环境。主要要求挑战者编写Matlab代码控制小车在一个地图环境中从起点运行至终点，地图中随机放置着障碍物(见下图）。小车是一个unicycle的动力系统（见下文解释），并装有“雷达”探测器，可探测前方障碍物情况。最终的成绩由小车到达终点的时间以及小车是否撞上障碍物等情况综合评估而得。
+# Introduction to Arena Challenge
+Arena Challenge is a simulation environment written in Matlab code. The main requirement is that the challenger writes Matlab code to control a cart from start to finish in a map environment with randomly placed obstacles (see below). The cart is powered by a unicycle (explained below) and is equipped with a “radar” detector to detect obstacles ahead. The final score is assessed by the time it takes for the cart to reach the finish line and whether or not the cart hits the obstacle.
 
-挑战者提交其设计的控制策略，我们将测试控制策略在随机地图和不同配置下的得分情况，得到策略的最终得分。
+The challenger submits his/her designed control strategy, which will be tested on a randomized map and in different configurations to obtain a final score.
 
 <div align="left">
 <img src=https://gitee.com/coralab/ic-challenge/raw/master/Arena/pics/arena_preview.png width=60%/>
 </div>
 
 
-## 1. 小车动力学模型
-小车的动力学模型，如下公式所示
+## 1. Dynamic model of the trolley
+The dynamics of the trolley is modeled as shown in the following equation
 <div align="left">
 <img src=https://gitee.com/coralab/ic-challenge/raw/master/Arena/pics/unicycle.png width=30%/>
 </div>
 
 
-其中，[x,y,$\theta$]分别是小车当前的空间位置和朝向。[u,v]是小车的控制量，u相当于小车的“油门”踏板，控制小车的前车速度；v是小车的“方向盘”，控制小车的转动速度。这是挑战者在编写代码时，唯一可以控制小车的两个物理量。
+Where [x,y,$\theta$] are the current spatial position and orientation of the cart. The [u,v] are the control quantities of the cart. u is the “gas” pedal of the cart, which controls the forward speed of the cart; v is the “steering wheel” of the cart, which controls the speed of rotation of the cart. These are the only two physical quantities that the challenger can control when writing the code.
 
-另外仿真环境对小车设置了“饱和”机制（如下图所示），即挑战者传递给仿真器的小车两个控制量，将会被限制在一定范围内。
+In addition, the simulation environment has set up a “saturation” mechanism for the cart (as shown in the figure below), i.e., the two control quantities of the cart passed by the challenger to the simulator will be limited to a certain range.
 
 <div align="left">
 <img src=https://gitee.com/coralab/ic-challenge/raw/master/Arena/pics/saturation.png width=30%/>
 </div>
 
 
-## 2. 雷达探测器
-小车前方有一个前向的雷达传感器，可探测前方是否有障碍物，如有障碍物将，将会把障碍物信息告知挑战者。见图中的小车前方红色三角形所表示的雷达探测范围。
+## 2. Radar Detector
+There is a forward-facing radar sensor in front of the cart that detects whether there is an obstacle in front of it, and if there is an obstacle, it will inform the challenger about the obstacle. See the radar detection range indicated by the red triangle in front of the cart in the figure.
 
 ## 3. Observation（当前环境信息）
 
-仿真环境每隔一段时间，将会把仿真环境的信息以Observation类的形式告知挑战者，它的成员变量包含  
+The simulation environment will inform the challenger about the simulation environment at regular intervals in the form of the Observation class, whose member variables contain  
 ```
 agent		%当前小车信息  
 scanMap	%当前雷达探测器探测到的信息  
@@ -41,34 +41,54 @@ endPos     	%小车目标位置
 map         	%全局地图  
 ```
 
-## 4. 得分
-在挑战开始时，挑战者将有一个基本分数，如挑战者控制小车与障碍物发生碰撞则会相应地扣分，如挑战者控制小车驶离地图范围会相应地扣分（扣分权重很大），如挑战者控制小车未在规定时间内到达终点，则超出时间每秒都会相应地扣分。
+## 4. Score
+At the beginning of the challenge, the challenger will have a base score, if the challenger controls the cart and the obstacle collision will be deducted accordingly, if the challenger controls the cart out of the map range will be deducted accordingly (deductions weighted heavily), if the challenger controls the cart does not reach the end within the time limit, will be deducted accordingly for each second beyond the time limit.
 
-## 5. 设计控制策略
-挑战者需要设计并提交一个Policy类文件，主要完成action函数。action函数传入参数为observation，传出action。仿真器会在特点的时间间隔调用action，依据挑战者设计的策略得到action，即控制量[u,v]，从而控制小车。
+## 5. Designing the control policy
+The challenger needs to design and submit a Policy class file, which mainly completes the action function. action function passes in the parameter observation and passes out the action. the simulator will call the action at the characteristic time interval, and get the action, i.e., the control quantity [u,v], based on the policy designed by the challenger, so as to control the cart.
 ```
-classdef Policy < handle        function action=action(self,observation)            if observation.collide                action=[-10,rand(1)-0.5];            else                action=[10,rand(1)-0.5];            end        end
+classdef Policy < handle
+        function action=action(self,observation)
+            if observation.collide
+                action=[-10,rand(1)-0.5];
+            else
+                action=[10,rand(1)-0.5];
+            end
+        end
 end
 ```
 
-## 6. Main函数
-以下是Main函数的基本代码，main读取系统配置文件对仿真环境进行配置，之后进入仿真循环。在循环中，仿真器对Arena Challenge进行物理仿真，计算出小车位置和状态，是否发生碰撞等信息。并且每一次都用挑战者设计控制策略，然后把控制策略作用于小车的控制中。
+## 6. Main function
+The following is the basic code of the Main function. main reads the system configuration file to configure the simulation environment and then enters the simulation loop. In the loop, the simulator performs physical simulation of Arena Challenge, calculates the information such as the position and state of the cart, whether there is a collision or not. And every time, it uses the Challenger to design the control strategy, and then acts the control strategy into the control of the cart.
 ```
-env = Env('sys.ini');   %读取系统配置文件policy=Policy();if (env.succeed)    observation = env.reset();    while 1        env.render();        action=policy.action(observation); %调用挑战者的控制策略        [observation,done,info]=env.step(action); %物理仿真        disp(info);        if(done)            break;        end        wait(100);    endend```
+env = Env('sys.ini');   %读取系统配置文件
+policy=Policy();
+if (env.succeed)
+    observation = env.reset();
+    while 1
+        env.render();
+        action=policy.action(observation); %调用挑战者的控制策略
+        [observation,done,info]=env.step(action); %物理仿真
+        disp(info);
+        if(done)
+            break;
+        end
+        wait(100);
+    end
+end
+```
 
-## 7. 仿真配置文件sys.ini
-为了方便挑战者进行测试，挑战者可以通过仿真配置文件sys.ini，进行相应配置。例如配置小车的起始和终止点，小车控制饱和范围，是否录制游戏运行过程等。具体见该文件。
+## 7. Simulation configuration file sys.ini
+In order to facilitate the testing of the challenger, the challenger can use the simulation configuration file sys.ini to configure accordingly. For example, configure the start and end points of the cart, the saturation range of the cart control, and whether to record the running process of the game. See this file for details.
+## 8. Challenge mode
+In sys.ini, set globalview to 1, the challenger can get the global map information from observation at the beginning; if globalview is set to 0, the challenger will only get the local map information obtained by the sensors from observation at each system refresh;
 
-## 8. 挑战模式
-在sys.ini中，把globalview设置为1，挑战者就可以在开始时从observation中获取全局地图信息；如把globalview设置为0，挑战者就只在每次系统刷新时从observation中获取传感器获得的局部地图信息；
 
-
-# 代码提交
-请以队伍的形式登录以下网站注册并提交Policy类代码
+# Submission
 
 <http://www.rayliable.net/manage/account/login>
 
-# Leader Board(排名榜)
+# Leader Board
 <http://www.rayliable.net/manage/item/ranking>
 
 
